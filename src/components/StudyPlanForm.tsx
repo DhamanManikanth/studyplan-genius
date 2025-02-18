@@ -35,6 +35,7 @@ export function StudyPlanForm() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState("");
+  const [error, setError] = useState("");
 
   const { register, handleSubmit, formState: { errors } } = useForm<StudyPlanFormData>();
 
@@ -48,22 +49,34 @@ export function StudyPlanForm() {
 
   const onSubmit = async (data: StudyPlanFormData) => {
     setIsLoading(true);
+    setError("");
     try {
-      const response = await fetch("/api/generate-study-plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          subjects: selectedSubjects,
-        }),
-      });
+      // Use the Supabase Edge Function URL
+      const response = await fetch(
+        "https://lovableproject.supabase.co/functions/v1/generate-study-plan",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Add the anon key header if required by your Supabase configuration
+            "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            ...data,
+            subjects: selectedSubjects,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
 
       const result = await response.json();
       setGeneratedPlan(result.plan);
     } catch (error) {
       console.error("Error generating study plan:", error);
+      setError("Failed to generate study plan. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -140,6 +153,10 @@ export function StudyPlanForm() {
               {...register("goals", { required: true })}
             />
           </div>
+
+          {error && (
+            <div className="text-red-500 text-sm mt-2">{error}</div>
+          )}
 
           <Button
             type="submit"
