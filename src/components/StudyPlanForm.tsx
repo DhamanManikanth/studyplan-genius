@@ -35,6 +35,7 @@ export function StudyPlanForm() {
     setIsLoading(true);
     setError("");
     try {
+      // Add the Bearer prefix to the API key
       const response = await fetch(
         "https://lovableproject.supabase.co/functions/v1/generate-study-plan",
         {
