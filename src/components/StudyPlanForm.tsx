@@ -14,56 +14,38 @@ import {
 } from "./ui/select";
 
 interface StudyPlanFormData {
-  subjects: string[];
+  subjects: string;
   examDate: string;
   studyHours: number;
   goals: string;
   learningStyle: string;
+  strengths: string;
+  weaknesses: string;
+  geminiApiKey: string;
 }
 
-const subjects = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "History",
-  "Literature",
-  "Computer Science",
-];
-
 export function StudyPlanForm() {
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState("");
   const [error, setError] = useState("");
 
   const { register, handleSubmit, formState: { errors } } = useForm<StudyPlanFormData>();
 
-  const toggleSubject = (subject: string) => {
-    setSelectedSubjects(prev =>
-      prev.includes(subject)
-        ? prev.filter(s => s !== subject)
-        : [...prev, subject]
-    );
-  };
-
   const onSubmit = async (data: StudyPlanFormData) => {
     setIsLoading(true);
     setError("");
     try {
-      // Use the Supabase Edge Function URL
       const response = await fetch(
         "https://lovableproject.supabase.co/functions/v1/generate-study-plan",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Add the anon key header if required by your Supabase configuration
-            "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            "Authorization": `Bearer ${data.geminiApiKey}`,
           },
           body: JSON.stringify({
             ...data,
-            subjects: selectedSubjects,
+            subjects: data.subjects.split(',').map(s => s.trim()),
           }),
         }
       );
@@ -91,23 +73,16 @@ export function StudyPlanForm() {
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           <div className="input-group">
-            <Label className="input-label">Select Subjects</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {subjects.map((subject) => (
-                <button
-                  key={subject}
-                  type="button"
-                  onClick={() => toggleSubject(subject)}
-                  className={`subject-tag ${
-                    selectedSubjects.includes(subject)
-                      ? "bg-primary/10 text-primary border-primary"
-                      : "bg-secondary/50 text-secondary-foreground border-transparent"
-                  }`}
-                >
-                  {subject}
-                </button>
-              ))}
-            </div>
+            <Label className="input-label">Enter Subjects</Label>
+            <Input
+              type="text"
+              className="fancy-input"
+              placeholder="Enter subjects separated by commas (e.g., Math, Physics, Chemistry)"
+              {...register("subjects", { required: true })}
+            />
+            {errors.subjects && (
+              <span className="text-red-500 text-sm">Please enter at least one subject</span>
+            )}
           </div>
 
           <div className="input-group">
@@ -146,12 +121,43 @@ export function StudyPlanForm() {
           </div>
 
           <div className="input-group">
+            <Label className="input-label">Your Strengths</Label>
+            <Textarea
+              className="fancy-input"
+              placeholder="What are your academic strengths?"
+              {...register("strengths", { required: true })}
+            />
+          </div>
+
+          <div className="input-group">
+            <Label className="input-label">Your Weaknesses</Label>
+            <Textarea
+              className="fancy-input"
+              placeholder="What areas do you need to improve?"
+              {...register("weaknesses", { required: true })}
+            />
+          </div>
+
+          <div className="input-group">
             <Label className="input-label">Study Goals</Label>
             <Textarea
               className="fancy-input min-h-[100px]"
               placeholder="What do you want to achieve?"
               {...register("goals", { required: true })}
             />
+          </div>
+
+          <div className="input-group">
+            <Label className="input-label">Gemini API Key</Label>
+            <Input
+              type="password"
+              className="fancy-input"
+              placeholder="Enter your Gemini API Key"
+              {...register("geminiApiKey", { required: true })}
+            />
+            {errors.geminiApiKey && (
+              <span className="text-red-500 text-sm">API key is required</span>
+            )}
           </div>
 
           {error && (

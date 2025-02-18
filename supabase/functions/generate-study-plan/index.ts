@@ -12,16 +12,21 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-
   try {
-    const { subjects, examDate, studyHours, goals, learningStyle } = await req.json();
+    const { subjects, examDate, studyHours, goals, learningStyle, strengths, weaknesses } = await req.json();
+    const apiKey = req.headers.get('Authorization')?.split(' ')[1];
+
+    if (!apiKey) {
+      throw new Error('API key is required');
+    }
 
     const prompt = `Generate a detailed study plan with the following information:
     Subjects: ${subjects.join(', ')}
     Exam Date: ${examDate}
     Daily Study Hours: ${studyHours}
     Learning Style: ${learningStyle}
+    Strengths: ${strengths}
+    Weaknesses: ${weaknesses}
     Goals: ${goals}
 
     Please create a comprehensive study schedule that:
@@ -29,13 +34,15 @@ serve(async (req) => {
     2. Suggests specific learning activities based on the learning style
     3. Includes breaks and revision periods
     4. Provides measurable milestones
-    5. Adapts to the exam timeline`;
+    5. Adapts to the exam timeline
+    6. Leverages the student's strengths
+    7. Provides strategies to improve weak areas`;
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         contents: [{
