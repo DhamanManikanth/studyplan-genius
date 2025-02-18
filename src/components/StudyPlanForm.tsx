@@ -35,13 +35,15 @@ export function StudyPlanForm() {
     setIsLoading(true);
     setError("");
     try {
+      // Remove 'Bearer ' if it's included in the API key
+      const apiKey = data.geminiApiKey.replace('Bearer ', '');
+      
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${data.geminiApiKey}`,
           },
           body: JSON.stringify({
             contents: [{
@@ -62,7 +64,9 @@ export function StudyPlanForm() {
                 4. Provides measurable milestones
                 5. Adapts to the exam timeline
                 6. Leverages the student's strengths
-                7. Provides strategies to improve weak areas`
+                7. Provides strategies to improve weak areas
+                
+                Please format the response in markdown syntax.`
               }]
             }],
             generationConfig: {
@@ -80,7 +84,8 @@ export function StudyPlanForm() {
       );
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `Error: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -91,7 +96,7 @@ export function StudyPlanForm() {
       }
     } catch (error) {
       console.error("Error generating study plan:", error);
-      setError("Failed to generate study plan. Please check your API key and try again.");
+      setError(error.message || "Failed to generate study plan. Please check your API key and try again.");
     } finally {
       setIsLoading(false);
     }
