@@ -35,9 +35,8 @@ export function StudyPlanForm() {
     setIsLoading(true);
     setError("");
     try {
-      // Add the Bearer prefix to the API key
       const response = await fetch(
-        "https://lovableproject.supabase.co/functions/v1/generate-study-plan",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
         {
           method: "POST",
           headers: {
@@ -45,8 +44,37 @@ export function StudyPlanForm() {
             "Authorization": `Bearer ${data.geminiApiKey}`,
           },
           body: JSON.stringify({
-            ...data,
-            subjects: data.subjects.split(',').map(s => s.trim()),
+            contents: [{
+              parts: [{
+                text: `Generate a detailed study plan with the following information:
+                Subjects: ${data.subjects}
+                Exam Date: ${data.examDate}
+                Daily Study Hours: ${data.studyHours}
+                Learning Style: ${data.learningStyle}
+                Strengths: ${data.strengths}
+                Weaknesses: ${data.weaknesses}
+                Goals: ${data.goals}
+                
+                Please create a comprehensive study schedule that:
+                1. Distributes the available study hours across subjects
+                2. Suggests specific learning activities based on the learning style
+                3. Includes breaks and revision periods
+                4. Provides measurable milestones
+                5. Adapts to the exam timeline
+                6. Leverages the student's strengths
+                7. Provides strategies to improve weak areas`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.8,
+              topK: 40,
+              maxOutputTokens: 2048,
+            },
+            safetySettings: [{
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }]
           }),
         }
       );
@@ -56,10 +84,14 @@ export function StudyPlanForm() {
       }
 
       const result = await response.json();
-      setGeneratedPlan(result.plan);
+      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
+        setGeneratedPlan(result.candidates[0].content.parts[0].text);
+      } else {
+        throw new Error("Invalid response format from API");
+      }
     } catch (error) {
       console.error("Error generating study plan:", error);
-      setError("Failed to generate study plan. Please try again.");
+      setError("Failed to generate study plan. Please check your API key and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +99,7 @@ export function StudyPlanForm() {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6">
-      <div className="form-container slide-in">
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-semibold text-center mb-8">
           Create Your Study Plan
         </h1>
@@ -113,10 +145,10 @@ export function StudyPlanForm() {
                 <SelectValue placeholder="Select your learning style" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="visual">Visual Learner</SelectItem>
-                <SelectItem value="auditory">Auditory Learner</SelectItem>
-                <SelectItem value="reading">Reading/Writing Learner</SelectItem>
-                <SelectItem value="kinesthetic">Kinesthetic Learner</SelectItem>
+                <SelectItem value="video">Watching Educational Videos</SelectItem>
+                <SelectItem value="reading">Reading Books and Notes</SelectItem>
+                <SelectItem value="practice">Practice and Problem Solving</SelectItem>
+                <SelectItem value="interactive">Interactive Learning Tools</SelectItem>
               </SelectContent>
             </Select>
           </div>
