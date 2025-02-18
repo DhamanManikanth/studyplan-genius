@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
+import ReactMarkdown from 'react-markdown';
 import {
   Select,
   SelectContent,
@@ -217,7 +218,13 @@ FORMAT THE ENTIRE RESPONSE IN MARKDOWN SYNTAX with proper headings, lists, and e
         {generatedPlan && (
           <div className="mt-8 p-6 bg-secondary/20 rounded-lg fade-in prose prose-sm max-w-none">
             <h2 className="text-xl font-semibold mb-4">Your Personalized Study Plan</h2>
-            <div className="whitespace-pre-wrap">{generatedPlan}</div>
+            <div className="markdown-content">
+              <ReactMarkdown 
+                className="prose prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:my-2 prose-ul:list-disc prose-ol:list-decimal prose-li:ml-4"
+              >
+                {generatedPlan}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
       </div>
