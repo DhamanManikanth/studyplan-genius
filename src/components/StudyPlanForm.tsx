@@ -48,25 +48,28 @@ export function StudyPlanForm() {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `Generate a detailed study plan with the following information:
-                Subjects: ${data.subjects}
-                Exam Date: ${data.examDate}
-                Daily Study Hours: ${data.studyHours}
-                Learning Style: ${data.learningStyle}
-                Strengths: ${data.strengths}
-                Weaknesses: ${data.weaknesses}
-                Goals: ${data.goals}
-                
-                Please create a comprehensive study schedule that:
-                1. Distributes the available study hours across subjects
-                2. Suggests specific learning activities based on the learning style
-                3. Includes breaks and revision periods
-                4. Provides measurable milestones
-                5. Adapts to the exam timeline
-                6. Leverages the student's strengths
-                7. Provides strategies to improve weak areas
-                
-                Please format the response in markdown syntax.`
+                text: `Please generate a detailed study plan and format the response in markdown syntax. Here are the details:
+
+# Study Plan Details
+- Subjects: ${data.subjects}
+- Exam Date: ${data.examDate}
+- Daily Study Hours: ${data.studyHours}
+- Learning Style: ${data.learningStyle}
+- Strengths: ${data.strengths}
+- Weaknesses: ${data.weaknesses}
+- Goals: ${data.goals}
+
+Please create a comprehensive study schedule that includes:
+
+1. Distribution of study hours across subjects
+2. Learning activities based on the specified learning style
+3. Breaks and revision periods
+4. Measurable milestones
+5. Timeline adaptation for the exam
+6. Strategies leveraging strengths
+7. Plans to improve weak areas
+
+FORMAT THE ENTIRE RESPONSE IN MARKDOWN SYNTAX with proper headings, lists, and emphasis where appropriate.`
               }]
             }],
             generationConfig: {
@@ -212,9 +215,9 @@ export function StudyPlanForm() {
         </form>
 
         {generatedPlan && (
-          <div className="mt-8 p-6 bg-secondary/20 rounded-lg fade-in">
+          <div className="mt-8 p-6 bg-secondary/20 rounded-lg fade-in prose prose-sm max-w-none">
             <h2 className="text-xl font-semibold mb-4">Your Personalized Study Plan</h2>
-            <pre className="whitespace-pre-wrap text-sm">{generatedPlan}</pre>
+            <div className="whitespace-pre-wrap">{generatedPlan}</div>
           </div>
         )}
       </div>
