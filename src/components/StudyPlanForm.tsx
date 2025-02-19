@@ -17,7 +17,7 @@ import {
 
 const supabase = createClient(
   'https://drokklpujlrnoelfmilj.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2trbHB1amxybm9lbGZtaWxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5MDk1NjIsImV4cCI6MjA1NTQ4NTU2Mn0.Q3raA198PHrquCWmOgsYANBgJZuC9KuW3Cu5uy9SfNg'
 );
 
 interface StudyPlanFormData {
