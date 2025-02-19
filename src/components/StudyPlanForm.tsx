@@ -6,6 +6,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import ReactMarkdown from 'react-markdown';
+import { createClient } from '@supabase/supabase-js';
 import {
   Select,
   SelectContent,
@@ -13,6 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+
+const supabase = createClient(
+  'https://drokklpujlrnoelfmilj.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+);
 
 interface StudyPlanFormData {
   subjects: string;
@@ -22,7 +28,6 @@ interface StudyPlanFormData {
   learningStyle: string;
   strengths: string;
   weaknesses: string;
-  geminiApiKey: string;
 }
 
 export function StudyPlanForm() {
@@ -36,8 +41,16 @@ export function StudyPlanForm() {
     setIsLoading(true);
     setError("");
     try {
-      // Remove 'Bearer ' if it's included in the API key
-      const apiKey = data.geminiApiKey.replace('Bearer ', '');
+      const { data: secret } = await supabase
+        .from('secrets')
+        .select('value')
+        .eq('name', 'GEMINI_API_KEY')
+        .single();
+      
+      const apiKey = secret?.value;
+      if (!apiKey) {
+        throw new Error('API key not found in settings');
+      }
       
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey,
@@ -100,7 +113,7 @@ FORMAT THE ENTIRE RESPONSE IN MARKDOWN SYNTAX with proper headings, lists, and e
       }
     } catch (error) {
       console.error("Error generating study plan:", error);
-      setError(error.message || "Failed to generate study plan. Please check your API key and try again.");
+      setError(error.message || "Failed to generate study plan");
     } finally {
       setIsLoading(false);
     }
@@ -187,19 +200,6 @@ FORMAT THE ENTIRE RESPONSE IN MARKDOWN SYNTAX with proper headings, lists, and e
               placeholder="What do you want to achieve?"
               {...register("goals", { required: true })}
             />
-          </div>
-
-          <div className="input-group">
-            <Label className="input-label">Gemini API Key</Label>
-            <Input
-              type="password"
-              className="fancy-input"
-              placeholder="Enter your Gemini API Key"
-              {...register("geminiApiKey", { required: true })}
-            />
-            {errors.geminiApiKey && (
-              <span className="text-red-500 text-sm">API key is required</span>
-            )}
           </div>
 
           {error && (
