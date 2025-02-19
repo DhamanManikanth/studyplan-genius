@@ -7,6 +7,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import ReactMarkdown from 'react-markdown';
 import { createClient } from '@supabase/supabase-js';
+import { useToast } from "./ui/use-toast";
 import {
   Select,
   SelectContent,
@@ -34,23 +35,34 @@ export function StudyPlanForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState("");
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<StudyPlanFormData>();
 
   const onSubmit = async (data: StudyPlanFormData) => {
     setIsLoading(true);
     setError("");
+    
     try {
-      const { data: secret } = await supabase
+      // Fetch the API key from Supabase
+      const { data: secretData, error: secretError } = await supabase
         .from('secrets')
         .select('value')
         .eq('name', 'GEMINI_API_KEY')
-        .single();
-      
-      const apiKey = secret?.value;
-      if (!apiKey) {
+        .maybeSingle();
+
+      if (secretError) {
+        console.error('Error fetching API key:', secretError);
+        throw new Error('Failed to fetch API key from settings');
+      }
+
+      if (!secretData?.value) {
+        console.error('No API key found in settings');
         throw new Error('API key not found in settings');
       }
+
+      const apiKey = secretData.value;
+      console.log('Successfully fetched API key');
       
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey,
@@ -102,18 +114,30 @@ FORMAT THE ENTIRE RESPONSE IN MARKDOWN SYNTAX with proper headings, lists, and e
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API Response Error:', errorData);
         throw new Error(errorData.error?.message || `Error: ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('API Response:', result);
+      
       if (result.candidates && result.candidates[0] && result.candidates[0].content) {
         setGeneratedPlan(result.candidates[0].content.parts[0].text);
+        toast({
+          title: "Success!",
+          description: "Your study plan has been generated successfully.",
+        });
       } else {
         throw new Error("Invalid response format from API");
       }
     } catch (error) {
       console.error("Error generating study plan:", error);
       setError(error.message || "Failed to generate study plan");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to generate study plan",
+      });
     } finally {
       setIsLoading(false);
     }
